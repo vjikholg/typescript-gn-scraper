@@ -58,3 +58,20 @@ export type MathNode =
     | {type: 'sub'; value: MathNode[]}
     | {type: 'sup'; value: MathNode[]}
     | {type: 'group'; tag: MathNode[], children: MathNode[]}
+
+export type HTMLTags = 'SUB' | 'SUP' | '√' | 'TEXT'; 
+
+type TagHandler = (arg: string) => MathNode; // defines a method-type which takes string -> MathNode<>; 
+
+function MathNodeBuilder(type: string, value: string | MathNode | MathNode[]): MathNode { 
+    return {type: type, value: value} as MathNode; 
+}
+
+export const ChildHandler : {[K in HTMLTags]: TagHandler} = {
+    'SUB': s => MathNodeBuilder('sub', s),
+    '√': s => MathNodeBuilder('sqrt', s), 
+    'SUP': s => MathNodeBuilder('sup', s), 
+    'TEXT': s => MathNodeBuilder('text', s)
+}
+
+
