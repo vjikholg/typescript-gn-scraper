@@ -1,5 +1,5 @@
 import { ElementHandle, Page } from "puppeteer";
-import { CharacterTable, MathNode, ChildHandler, HTMLTags} from "../types";
+import { MathNode } from "../types";
 
 /**
  * Mental note:
@@ -9,11 +9,18 @@ import { CharacterTable, MathNode, ChildHandler, HTMLTags} from "../types";
  */
 
 export class CharTableExtractor {
-    // private async get(page: Page) : Promise<string[][]> {
-    //     let rows : Promise<MathNode[][]> = Promise.all((await this.getCharTable(page)).map((handler) => this.extractFromRow(handler)));
-    //     return rows;
-    // }
+
     
+    /**
+     * External facing method of which we call, provide the webpage, and extract a character table in MathNode[][] format. 
+     * @param page assumingly a group-names page w/ character table. 
+     * @returns MathNode[][], 2d array representing the character table of an elem
+     */
+    async get(page: Page) : Promise<MathNode[][]> {
+        const rows : ElementHandle<HTMLTableRowElement>[] = await this.getCharTable(page); 
+        return Promise.all(rows.map((tr) => this.extractFromRow(tr))); 
+    }
+
     /**
      * Extracts ElementHandle of class = chartable. 
      * 
@@ -22,7 +29,7 @@ export class CharTableExtractor {
      */
     private async getCharTable(page: Page) : Promise<ElementHandle<HTMLTableRowElement>[]> {
         const table : ElementHandle<Element> | null = await page.$(".chartable"); // class uses . 
-        if (!table) throw new Error("chartable element not found"); 
+        if (!table) throw new Error(`no character table for the following page: ${page.url()}`); 
         return await (table.$$("tr")) as ElementHandle<HTMLTableRowElement>[];
     }
 
@@ -34,7 +41,7 @@ export class CharTableExtractor {
      * @param row handler for our HTMLTableRowElement - obtained from getCharTable above. 
      * @returns string[] , textContent of each <td> element stored in string[]
      */
-    private async extractFromRow(row: ElementHandle<HTMLTableRowElement>) : Promise<MathNode[][]> {
+    private async extractFromRow(row: ElementHandle<HTMLTableRowElement>) : Promise<MathNode[]> {
         return row.$$eval('td', (cells: HTMLTableCellElement[]) => {
             function parseChildren(parent: Node): MathNode[] { 
                 const results: MathNode[] = [];                                                 
@@ -104,39 +111,9 @@ export class CharTableExtractor {
                     children: nodes
                 } as MathNode
             }
-            return cells.map(td => parseChildren(td)); 
+            return cells.map(td => parseChildren(td)).flat(); 
         });
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     /**
      * handle logic of parsing through nodes, hands off processing to parseElement
