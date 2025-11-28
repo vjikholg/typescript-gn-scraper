@@ -1,0 +1,56 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model GroupInfo {
+  id Int @id @default(autoincrement())
+  name String @unique
+  order Int
+  tags String[]
+  charTable CharTableEntry[]
+}
+
+model MathNode {
+  id String             @id @default(uuid())
+  type MathNodeTypes
+  payload Json          // @ READ TIME, CHECK TYPE -> MAP TO PROPER READ FUNCTION 
+  parentId String?
+  parentNode MathNode?  @relation("ParentChildren", fields:[parentId], references: [id])
+  children MathNode[]   @relation("ParentChildren")
+  charTableEntries CharTableEntry[]
+
+  @@index([parentId])
+}
+
+model CharTableEntry {
+  id Int @id @default(autoincrement())
+  groupInfoId Int
+  groupInfo GroupInfo @relation(fields: [groupInfoId], references: [id])
+  mathNodeId String
+  mathNode MathNode @relation(fields: [mathNodeId], references: [id])
+  row Int
+  column Int
+
+  @@index([groupInfoId])
+  @@index([mathNodeId])
+}
+
+enum MathNodeTypes {
+  text
+  fraction
+  sqrt 
+  sub
+  sup
+  group
+}

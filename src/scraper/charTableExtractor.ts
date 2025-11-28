@@ -9,8 +9,6 @@ import { MathNode } from "../types";
  */
 
 export class CharTableExtractor {
-
-    
     /**
      * External facing method of which we call, provide the webpage, and extract a character table in MathNode[][] format. 
      * @param page assumingly a group-names page w/ character table. 

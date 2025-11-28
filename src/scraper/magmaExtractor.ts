@@ -45,7 +45,7 @@ export function unicodeToLatex(txt: string) : string {
         .replace(/ ([\^_])/g, '$1');
     }
 
-export function labelToLatex(label: String) : String {
+export function labelToLatex(label: string) : string {
         return label
           // C3   -> C_{3}
           .replace(/([A-Za-z])(\d+)/g, '$1_{$2}')
