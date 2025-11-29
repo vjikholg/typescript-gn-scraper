@@ -6,7 +6,6 @@ import { jest, test, expect } from "@jest/globals";
 jest.setTimeout(30_000); 
 
 const c4 = "https://people.maths.bris.ac.uk/~matyd/GroupNames/1/C4.html"; 
-
 const c33c2 = "https://people.maths.bris.ac.uk/~matyd/GroupNames/1/C3%5E3sC2.html"; 
 const c2dic6 = "https://people.maths.bris.ac.uk/~matyd/GroupNames/1/C2xDic6.html"; 
 const c11c5 = "https://people.maths.bris.ac.uk/~matyd/GroupNames/1/C11sC5.html";

@@ -14,7 +14,7 @@ export class CharTableExtractor {
      * @param page assumingly a group-names page w/ character table. 
      * @returns MathNode[][], 2d array representing the character table of an elem
      */
-    async get(page: Page) : Promise<MathNode[][]> {
+    static async get(page: Page) : Promise<MathNode[][]> {
         const rows : ElementHandle<HTMLTableRowElement>[] = await this.getCharTable(page); 
         return Promise.all(rows.map((tr) => this.extractFromRow(tr))); 
     }
@@ -25,10 +25,11 @@ export class CharTableExtractor {
      * @param page The page we're looking for class=chartable in
      * @returns ElementHandle<HTMLTableRowElement>[], array of handlers pointing to the <tr> within <table> 
      */
-    private async getCharTable(page: Page) : Promise<ElementHandle<HTMLTableRowElement>[]> {
-        const table : ElementHandle<Element> | null = await page.$(".chartable"); // class uses . 
-        if (!table) throw new Error(`no character table for the following page: ${page.url()}`); 
-        return await (table.$$("tr")) as ElementHandle<HTMLTableRowElement>[];
+    static async getCharTable(page: Page) : Promise<ElementHandle<HTMLTableRowElement>[]> {
+        const listOfRowElements : ElementHandle<HTMLTableRowElement>[] = await page.$$(".chartable tr"); 
+        if (listOfRowElements.length === 0) throw new Error(`no character table for the following page: ${page.url()}`); 
+        
+        return listOfRowElements;
     }
 
     /**
@@ -39,8 +40,13 @@ export class CharTableExtractor {
      * @param row handler for our HTMLTableRowElement - obtained from getCharTable above. 
      * @returns string[] , textContent of each <td> element stored in string[]
      */
-    private async extractFromRow(row: ElementHandle<HTMLTableRowElement>) : Promise<MathNode[]> {
+    static async extractFromRow(row: ElementHandle<HTMLTableRowElement>) : Promise<MathNode[]> {
         return row.$$eval('td', (cells: HTMLTableCellElement[]) => {
+            /**
+             * handle logic of parsing through nodes, hands off processing to parseElement
+             * @param parent parent node in question we're recursively parsing through
+             * @returns List MathNode[] containing mathnode(s) representing the nested HTML elements - in particular, given parent node, it returns the list of children
+             */
             function parseChildren(parent: Node): MathNode[] { 
                 const results: MathNode[] = [];                                                 
                 parent.childNodes.forEach((child) => {                                          // for each child: 
@@ -57,14 +63,21 @@ export class CharTableExtractor {
                 return results;
             }
 
+            /**
+            * Handles the logic mapping HTMLElement -> MathNodes
+            * If detect children in el: HTMLElement, hands off further parsing back to parseChildren. 
+            * 
+            * @param el 
+            * @returns 
+            */
             function parseElement(el: HTMLElement): MathNode {
                 if (el.tagName === "SPAN" && el.classList.contains("frac")) {
-                    const sup: HTMLElement = el.querySelector("sup")!; 
-                    const sub: HTMLElement = el.querySelector("sub")!; 
+                    const sup: HTMLElement | null = el.querySelector("sup"); 
+                    const sub: HTMLElement | null = el.querySelector("sub"); 
                     return {
                         type: "fraction", 
-                        numerator: parseElement(sup!) ?? {type: "text", value: ''} as MathNode,
-                        denominator: parseElement(sub!) ?? {type:"text", value: ''} as MathNode
+                        numerator: sup ? parseElement(sup) : {type: "text", value: ''} as MathNode,
+                        denominator: sub ? parseElement(sub) : {type:"text", value: ''} as MathNode
                     } as MathNode; 
                 }
 
@@ -100,7 +113,12 @@ export class CharTableExtractor {
                     children: parseChildren(el)
                 } as MathNode
             }
-
+            /**
+             * Consumes MathNode[] and returns MathNode of type group
+             * @param nodes 
+             * @param tag 
+             * @returns 
+             */
             function wrapChildren(nodes: MathNode[], tag: string) : MathNode { 
                 if (nodes.length === 1) return nodes[0]
                 return {
@@ -109,16 +127,13 @@ export class CharTableExtractor {
                     children: nodes
                 } as MathNode
             }
-            return cells.map(td => parseChildren(td)).flat(); 
+            return cells.map(td => wrapChildren(parseChildren(td), td.tagName)); 
         });
     }
 
-    /**
-     * handle logic of parsing through nodes, hands off processing to parseElement
-     * @param parent parent node in question we're recursively parsing through
-     * @returns List MathNode[] containing mathnode(s) representing the nested HTML elements - in particular, given parent node, it returns the list of children
-     */
-    private parseChildren(parent: Node) : MathNode[] { 
+    // Below set of functions exported for strictly testing. 
+
+    static parseChildren(parent: Node): MathNode[] { 
         const results: MathNode[] = [];                                                 
         parent.childNodes.forEach((child) => {                                          // for each child: 
             // check recursive base case - text or empty node                           // 1. if text node -> return MathNode w/ type text
@@ -134,28 +149,17 @@ export class CharTableExtractor {
         return results;
     }
 
-    /**
-     * Handles the logic mapping HTMLElement -> MathNodes
-     * If detect children in el: HTMLElement, hands off further parsing back to parseChildren. 
-     * 
-     * @param el 
-     * @returns 
-     */
-    private parseElement(el: HTMLElement) : MathNode { 
-        // plain text - <sup> 1- <span>√<span> -15 </span></span> </sup>; the "1-" is considered a text
-        // handled in the above parseChildren case
-
-        // Fraction: <span class = "fraction"> <sup>...</sup><sub>...</sub>
+    static parseElement(el: HTMLElement): MathNode {
         if (el.tagName === "SPAN" && el.classList.contains("frac")) {
-            const sup: HTMLElement = el.querySelector("sup")!; 
-            const sub: HTMLElement = el.querySelector("sub")!; 
+            const sup: HTMLElement | null = el.querySelector("sup"); 
+            const sub: HTMLElement | null = el.querySelector("sub"); 
             return {
                 type: "fraction", 
-                numerator: this.parseElement(sup!) ?? {type: "text", value: ''} as MathNode,
-                denominator: this.parseElement(sub!) ?? {type:"text", value: ''} as MathNode
+                numerator: sup ? this.parseElement(sup) : {type: "text", value: ''} as MathNode,
+                denominator: sub ? this.parseElement(sub) : {type:"text", value: ''} as MathNode
             } as MathNode; 
         }
-        
+    
         // Sqrt: <sup> 1- <span>√<span> -15 </span></span> </sup>
         if (el.tagName === "SPAN" && el.innerText.trim().startsWith("√")) {     //  
             return { 
@@ -166,21 +170,21 @@ export class CharTableExtractor {
             } as MathNode                                 // this is due to fact GN uses 2 spans for sqrt 
         }                                                 // one for symbol, other for contents
         // Sub, Sup cases
-
+    
         if (el.tagName === "SUB") {
             return {
                 type: "sub", 
                 value: this.wrapChildren(this.parseChildren(el), el.tagName)
             } as MathNode
         }
-
+    
         if (el.tagName === "SUP") {
             return {
                 type: "sup", 
                 value: this.wrapChildren(this.parseChildren(el), el.tagName)
             } as MathNode
         }
-
+    
         // Fallback group node: 
         return {
             type: "group", 
@@ -188,8 +192,8 @@ export class CharTableExtractor {
             children: this.parseChildren(el)
         } as MathNode
     }
-
-    private wrapChildren(nodes: MathNode[], tag: string) : MathNode { 
+    
+    static wrapChildren(nodes: MathNode[], tag: string) : MathNode { 
         if (nodes.length === 1) return nodes[0]
         return {
             type: "group", 
@@ -197,6 +201,8 @@ export class CharTableExtractor {
             children: nodes
         } as MathNode
     }
+
+
+
+    
 }
-
-

@@ -418,3 +418,4 @@ FodyWeavers.xsd
 *.msp
 
 /src/generated/prisma
+prisma.config.ts

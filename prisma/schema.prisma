@@ -14,13 +14,14 @@ datasource db {
 }
 
 model GroupInfo {
-  id Int @id @default(autoincrement())
+  id Int @id @default(autoincrement()) @unique
   name String @unique
   order Int
   tags String[]
   charTable CharTableEntry[]
+  generators Json[]
 }
-
+// MathNode + CharTable models 
 model MathNode {
   id String             @id @default(uuid())
   type MathNodeTypes
@@ -36,7 +37,7 @@ model MathNode {
 model CharTableEntry {
   id Int @id @default(autoincrement())
   groupInfoId Int
-  groupInfo GroupInfo @relation(fields: [groupInfoId], references: [id])
+  groupInfo GroupInfo @relation(fields: [groupInfoId], references: [id]) 
   mathNodeId String
   mathNode MathNode @relation(fields: [mathNodeId], references: [id])
   row Int
@@ -54,3 +55,5 @@ enum MathNodeTypes {
   sup
   group
 }
+
+
