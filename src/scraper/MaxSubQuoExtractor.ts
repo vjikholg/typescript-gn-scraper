@@ -76,16 +76,16 @@ export class MaxSubQuoExtractor {
     }
 }
 
-async function main() { 
-    const browser = await launchBrowser()
-    const page = await browser.newPage()
-    await page.goto("https://people.maths.bris.ac.uk/~matyd/GroupNames/1/Q8.html"); 
-    
-    const test : ElementHandle<HTMLParagraphElement> = await MaxSubQuoExtractor.search(page);
-    const test2 : string[][] = await MaxSubQuoExtractor.processPElement(test);
-    console.log(test2);   
-}
-
-main();
+// async function main() { 
+//     const browser = await launchBrowser()
+//     const page = await browser.newPage()
+//     await page.goto("https://people.maths.bris.ac.uk/~matyd/GroupNames/1/Q8.html"); 
+//     
+//     const test : ElementHandle<HTMLParagraphElement> = await MaxSubQuoExtractor.search(page);
+//     const test2 : string[][] = await MaxSubQuoExtractor.processPElement(test);
+//     console.log(test2);   
+// }
+// 
+// main();
 
 

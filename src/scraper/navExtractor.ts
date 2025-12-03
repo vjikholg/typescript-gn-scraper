@@ -63,15 +63,15 @@ export class NavExtractors {
 
 }
 
-async function main() { 
-    const browser : Browser = await launchBrowser();
-    const page : Page = await browser.newPage(); 
-    await (page.goto("https://people.maths.bris.ac.uk/~matyd/GroupNames/1/D5.html"))
-    const test = await NavExtractors.getNavbar(page); 
-    await NavExtractors.navbarProcess(test);
-
-}
-
-main();
+// async function main() { 
+//     const browser : Browser = await launchBrowser();
+//     const page : Page = await browser.newPage(); 
+//     await (page.goto("https://people.maths.bris.ac.uk/~matyd/GroupNames/1/D5.html"))
+//     const test = await NavExtractors.getNavbar(page); 
+//     await NavExtractors.navbarProcess(test);
+// 
+// }
+// 
+// main();
 
 
