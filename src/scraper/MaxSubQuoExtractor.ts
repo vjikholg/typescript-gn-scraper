@@ -1,20 +1,26 @@
 import { Page, ElementHandle, launch } from "puppeteer";
 import { launchBrowser } from "./browser";
 
-export class MaxSubQuoExtractor { 
 
+
+/**
+ * Contains set of methods that scrape which maximal subgroup this particular group is of, 
+ * and which maximal quotients this group is of (yes confusing wording, basically C1 is a 
+ * maximal subgroup of Cyclic groups of prime order, eg., C2, C3, C7, ...  
+ */
+export class MaxSubQuoExtractor { 
     /**
-     * 
+     * Given a page
      * @param page 
      */
-    static async getMaxSubgroupsQuotients(page: Page) { 
+    static async getMaxSubgroupsQuotients(page: Page) : Promise<string[][]> { 
         try { 
             return await this.processPElement(await this.search(page)); 
         } catch (err: any) {
             console.error(err.message)
         }
+        return []; 
     }
-
 
     /**
      * searches page for <p> handles and returns an array of <p> elementHandles

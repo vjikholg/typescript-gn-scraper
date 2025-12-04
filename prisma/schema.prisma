@@ -16,11 +16,23 @@ datasource db {
 model GroupInfo {
   id Int @id @default(autoincrement()) @unique
   name String @unique
+  label String @unique
+  center String @unique
+  frattini String @unique
+  Sylow Int[] @unique
   order Int
   tags String[]
   charTable CharTableEntry[]
   generators Json[]
 }
+
+model Sylow {
+  id Int @id @default(autoincrement()) @unique
+  order Int
+  count Int 
+  type String
+}
+
 // MathNode + CharTable models 
 model MathNode {
   id String             @id @default(uuid())

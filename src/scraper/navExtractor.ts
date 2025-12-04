@@ -8,9 +8,16 @@ const NavbarLabels : Set<string> = new Set(NavbarTypes);
 const SylowRegex : RegExp = /\d+/;
 type Sylow = {n: Number, p: Number}
 
+/** Contains methods that scrape information from the "navigation" bar component on GN. 
+ * Information includes: 
+ * Label: C4, D5, C4:C2, etc.,  
+ * Z(G), Iota(G)
+ * Sylow Subgroups - Number, Order, Label
+ * Aut(G), Out(G)
+ */
 export class NavExtractors { 
     
-    static async getNavbar(page: Page) : Promise<ElementHandle<HTMLUListElement>> {
+    static async  getNavbar(page: Page) : Promise<ElementHandle<HTMLUListElement>> {
         const navbar : ElementHandle<HTMLUListElement> | null = await page.$("nav ul")
         if (!navbar) throw new Error(`no navbar at link: ${page.url()}`);
         return navbar; 
