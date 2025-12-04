@@ -28,6 +28,7 @@ class SeriesExtractor {
                 selfLabel = await nav[i+1].evaluate((li : HTMLLIElement) => { 
                     return li.innerText
                 })
+                break; 
             }
         }
 
@@ -36,7 +37,8 @@ class SeriesExtractor {
             const label : string = await children[0].evaluate((td) => { 
                 return td.innerText.trim()!;
             })
-            
+
+
             const rawseries : ElementHandle<HTMLAnchorElement>[] = (await children[1].$$('a'))
             const series : string[] = []; 
             
@@ -46,9 +48,14 @@ class SeriesExtractor {
                 }))
             }
 
-            if (label !== "Upper central") {
+            const containsSelf : boolean = await table.evaluate((elem: HTMLTableElement, selfLabel : string) => {
+                return elem.innerText.includes(selfLabel);
+            }, selfLabel)
+
+            if (containsSelf) { 
                 series.push(selfLabel);
-            }
+            } 
+
             processed[label] = series;
         }
         return processed; 
@@ -63,6 +70,12 @@ async function main() {
     const test = await SeriesExtractor.findHandle(page);
     const test2 = await SeriesExtractor.processSeries(test, page);
     console.log(test2);   
+
+    await page.goto("https://people.maths.bris.ac.uk/~matyd/GroupNames/1/S4.html"); 
+    const test3 = await SeriesExtractor.findHandle(page); 
+    const test4 = await SeriesExtractor.processSeries(test3, page); 
+    console.log(test4);
+
 }
 
 main();
