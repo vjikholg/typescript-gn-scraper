@@ -1,5 +1,6 @@
 import { ElementHandle, Page } from "puppeteer";
 import { launchBrowser } from "./browser";
+import { Series, ChiefSeries, UpperCentralSeries, LowerCentralSeries, DerivedSeries, JenningsSeries, SeriesHandler } from "../types/Series";
 
 
 
@@ -17,8 +18,8 @@ class SeriesExtractor {
         return table; 
     }
 
-    static async processSeries(handles : ElementHandle<HTMLTableElement>[], page : Page) : Promise<Record<string, string[]>> { 
-        const processed : Record<string, string[]> = {};  
+    static async processSeries(handles : ElementHandle<HTMLTableElement>[], page : Page) : Promise<Record<string, Series>> { 
+        const processed : Record<string, Series> = {};  
         // we need to get "self label for ending series"; 
         const nav : ElementHandle<HTMLLIElement>[] = (await page.$$("nav ul li"));
         let selfLabel : string = ""; 
@@ -56,7 +57,7 @@ class SeriesExtractor {
                 series.push(selfLabel);
             } 
 
-            processed[label] = series;
+            processed[label] = SeriesHandler(label)(series);
         }
         return processed; 
     }
