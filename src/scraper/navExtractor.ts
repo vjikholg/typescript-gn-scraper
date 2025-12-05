@@ -15,7 +15,7 @@ type Sylow = {n: Number, p: Number}
  * Sylow Subgroups - Number, Order, Label
  * Aut(G), Out(G)
  */
-export class NavExtractors { 
+export class NavExtractor { 
     
     static async  getNavbar(page: Page) : Promise<ElementHandle<HTMLUListElement>> {
         const navbar : ElementHandle<HTMLUListElement> | null = await page.$("nav ul")

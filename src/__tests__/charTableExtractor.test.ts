@@ -1,7 +1,7 @@
 import { Browser, launch, Page } from "puppeteer"
 import { launchBrowser }         from "../scraper/browser";
 import { CharTableExtractor }    from "../scraper/charTableExtractor"
-import { MathNode }              from "../types"; 
+import { MathNode }              from "../types/MathNode"; 
 import { test, expect, describe }    from "@jest/globals";
 
 
