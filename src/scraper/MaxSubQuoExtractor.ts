@@ -13,13 +13,14 @@ export class MaxSubQuoExtractor {
      * Given a page
      * @param page 
      */
-    static async getMaxSubgroupsQuotients(page: Page) : Promise<string[][]> { 
+
+    static async getMaxSubgroupsQuotients(page: Page) : Promise<Record<string, string[]>> { 
         try { 
             return await this.processPElement(await this.search(page)); 
         } catch (err: any) {
             console.error(err.message)
         }
-        return []; 
+        return {}; 
     }
 
     /**
@@ -43,7 +44,7 @@ export class MaxSubQuoExtractor {
      * @param pElem <p> element in question containing the maximal, minimal subgroups. 
      * @returns 
      */
-    static async processPElement(pElem : ElementHandle<HTMLParagraphElement>) : Promise<string[][]> { 
+    static async processPElement(pElem : ElementHandle<HTMLParagraphElement>) : Promise<Record<string, string[]>> { 
         const children : ElementHandle<HTMLAnchorElement | HTMLElement>[] = await pElem.$$("a, b"); // grabs elements a, br
         const maximal : string[] = [];
         const minimal : string[] = []; 
@@ -78,20 +79,25 @@ export class MaxSubQuoExtractor {
                 minimal.push(name);
             }
         }
-        return [maximal, minimal] as string[][];
+
+        const record : Record<string, string[]> = {}; 
+        record["maximal"] = maximal; 
+        record["minimal"] = minimal;  
+
+        return record;
     }
 }
 
-// async function main() { 
-//     const browser = await launchBrowser()
-//     const page = await browser.newPage()
-//     await page.goto("https://people.maths.bris.ac.uk/~matyd/GroupNames/1/Q8.html"); 
-//     
-//     const test : ElementHandle<HTMLParagraphElement> = await MaxSubQuoExtractor.search(page);
-//     const test2 : string[][] = await MaxSubQuoExtractor.processPElement(test);
-//     console.log(test2);   
-// }
-// 
-// main();
+async function main() { 
+    const browser = await launchBrowser()
+    const page = await browser.newPage()
+    await page.goto("https://people.maths.bris.ac.uk/~matyd/GroupNames/1/Q8.html"); 
+    
+    const test : ElementHandle<HTMLParagraphElement> = await MaxSubQuoExtractor.search(page);
+    const test2 : Record<string, string[]> = await MaxSubQuoExtractor.processPElement(test);
+    console.log(test2);   
+}
+
+main();
 
 

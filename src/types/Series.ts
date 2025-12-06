@@ -1,4 +1,4 @@
-interface Series {
+export interface Series {
     seriesByID?: number[]; // keep as ids -> sql: getById, etc., 
     seriesByLabel: string[];
 }
