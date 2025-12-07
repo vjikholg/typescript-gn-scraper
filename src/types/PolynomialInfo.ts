@@ -1,3 +1,5 @@
+import { MathNode } from "./MathNode";
+
 export class PolynomialInfo {
     action: string; 
     polynomial: number[]; // degree = number.length, nth coeff. = polynomial[n-1];

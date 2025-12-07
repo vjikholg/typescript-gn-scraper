@@ -3,6 +3,7 @@
  * Doing it this way persists data more easily and translates well into LaTeX
  */
 
+
 export type MathNode = 
     | {type: 'text'; value: string}
     | {type: 'fraction'; numerator: MathNode; denominator: MathNode}
@@ -29,6 +30,7 @@ export const ChildHandler : {[K in HTMLTags]: TagHandler} = {
     'TEXT': (s: string) => MathNodeBuilder('text', s), 
     'FRAC': (s: MathNode, q: MathNode) => FractionBuilder(s,q)
 }
+
 
 /**
  * handle logic of parsing through nodes, hands off processing to parseElement
