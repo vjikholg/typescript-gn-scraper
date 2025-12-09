@@ -6,7 +6,7 @@ async function main() {
     bundle: true, 
     format: 'iife', 
     globalName: 'MathNode',
-    outfile: 'dist/mathNodeParser.bundle.js',
+    outfile: 'dist/MathNodeParser.bundle.js',
     }); 
 }
 

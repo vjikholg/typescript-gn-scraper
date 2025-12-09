@@ -1,5 +1,6 @@
 import { ElementHandle, Page } from "puppeteer";
 import { MathNode, parseChildren, parseElement, wrapChildren} from "../types/MathNode"
+import { ScriptInjection } from "./browser";
 
 /**
  * Mental note:
@@ -15,6 +16,7 @@ export class CharTableExtractor {
      * @returns MathNode[][], 2d array representing the character table of an elem
      */
     static async get(page: Page) : Promise<MathNode[][]> {
+        ScriptInjection(page);
         const rows : ElementHandle<HTMLTableRowElement>[] = await this.getCharTable(page); 
         return Promise.all(rows.map((tr) => this.extractFromRow(tr))); 
     }
@@ -41,7 +43,17 @@ export class CharTableExtractor {
      * @returns string[] , textContent of each <td> element stored in string[]
      */
     static async extractFromRow(row: ElementHandle<HTMLTableRowElement>) : Promise<MathNode[]> {
+        
+        // grab all rows
         return row.$$eval('td', (cells: HTMLTableCellElement[]) => {
+        // 
+            
+            const {parseChildren, parseElement, wrapChildren} = (window as any).MathNode as {
+                parseChildren(parent: Node) : MathNode[],
+                parseElement(el : HTMLElement) : MathNode,
+                wrapChildren(nodes: MathNode[], tag: string) : MathNode
+            }
+
             return cells.map(td => wrapChildren(parseChildren(td), td.tagName)); 
         });
     }

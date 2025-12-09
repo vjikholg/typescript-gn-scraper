@@ -3,34 +3,51 @@
  * Doing it this way persists data more easily and translates well into LaTeX
  */
 
-
+export interface TextNode {type : 'text', value: string, parent: MathNode};
+export interface FracNode {type: 'fraction'; numerator: MathNode; denominator: MathNode, parent: MathNode};
+export interface SqrtNode {type: 'sqrt'; value: MathNode, parent: MathNode}; 
+export interface SubNode {type: 'sub'; value: MathNode, parent: MathNode}; 
+export interface SupNode {type: 'sup'; value: MathNode, parent: MathNode}; 
+export interface GroupNode {type: 'group'; tag: string, children: MathNode[], parent: MathNode};
+export type MathNodeTypes = MathNode['type'];
 export type MathNode = 
-    | {type: 'text'; value: string}
-    | {type: 'fraction'; numerator: MathNode; denominator: MathNode}
-    | {type: 'sqrt'; value: MathNode}
-    | {type: 'sub'; value: MathNode}
-    | {type: 'sup'; value: MathNode}
-    | {type: 'group'; tag: string, children: MathNode[]}; // represent a math statement which cannot be simplified to a single value, i.e., 1+√5
+      TextNode
+    | FracNode 
+    | SqrtNode 
+    | SubNode 
+    | SupNode 
+    | GroupNode // represent a math statement which cannot be simplified to a single value, i.e., 1+√5
+
+export type NodeOf<T extends MathNodeTypes> = Extract<MathNode, {type: T}>; 
+
+
 
 export type HTMLTags = 'SUB' | 'SUP' | '√' | 'TEXT' | 'FRAC'; 
-type TagHandler = ((arg: string) => MathNode) | ((arg1: MathNode, arg2: MathNode) => MathNode); // defines a method-type which takes string -> MathNode<>; 
+
+type TagHandler = ((text: string) => MathNode) 
+| ((arg1: MathNode, arg2: MathNode) => MathNode) // defines a method-type which takes string -> MathNode<>; 
+| ((tagArg: string, arg2: MathNode[]) => MathNode)
 
 function MathNodeBuilder(type: string, value: string | MathNode | MathNode[]): MathNode { 
     return {type: type, value: value} as MathNode; 
 }
 
-const FractionBuilder: TagHandler = (numerator: MathNode, denom: MathNode) => {
+const FractionBuilder : TagHandler = (numerator: MathNode, denom: MathNode) => {
     return {type: "fraction", numerator: numerator, denominator: denom} as MathNode;
 }
 
-export const ChildHandler : {[K in HTMLTags]: TagHandler} = {
-    'SUB': (s: string) => MathNodeBuilder('sub', s),
-    '√': (s: string) => MathNodeBuilder('sqrt', s), 
-    'SUP': (s: string) => MathNodeBuilder('sup', s), 
-    'TEXT': (s: string) => MathNodeBuilder('text', s), 
-    'FRAC': (s: MathNode, q: MathNode) => FractionBuilder(s,q)
+const GroupBuilder : TagHandler = (tag: string, children: MathNode[]) => {
+    return {type: 'group', tag: tag, children: children} as MathNode;
 }
 
+export const ChildFactory : {[K in MathNodeTypes]: TagHandler} = {
+    'sub': (s: string) => MathNodeBuilder('sub', s),
+    'sqrt': (s: string) => MathNodeBuilder('sqrt', s), 
+    'sup': (s: string) => MathNodeBuilder('sup', s), 
+    'text': (s: string) => MathNodeBuilder('text', s), 
+    'fraction': (n: MathNode, d: MathNode) => FractionBuilder(n,d),
+    'group' : (t: string, mn: MathNode[]) => GroupBuilder(t,mn)
+}
 
 /**
  * handle logic of parsing through nodes, hands off processing to parseElement
@@ -39,8 +56,8 @@ export const ChildHandler : {[K in HTMLTags]: TagHandler} = {
  */
 export function parseChildren(parent: Node): MathNode[] { 
     const results: MathNode[] = [];                                                 
-    parent.childNodes.forEach((child) => {                                          // for each child: 
-        // check recursive base case - text or empty node                           // 1. if text node -> return MathNode w/ type text
+    parent.childNodes.forEach((child : Node) => {                                   // for each child: 
+        // check recursive base case -                                              // 1. if text node -> return MathNode w/ type text
         if (child.nodeType === Node.TEXT_NODE) {                                    // 2. if element node, i.e., <td><span ... > </td>, determine span class
             const text : string = child.textContent?.trim() ?? ''; // safety        //  2a. if fraction -> look at parseChildren <sup>, <sub> elems 
             if (text) {                                                             //  2b. if sqrt -> 
@@ -60,10 +77,11 @@ export function parseChildren(parent: Node): MathNode[] {
 * @param el 
 * @returns 
 */
-export function parseElement(el: HTMLElement): MathNode {
+export function parseElement(el: HTMLElement, parent? : MathNode): MathNode {
     if (el.tagName === "SPAN" && el.classList.contains("frac")) {
         const sup: HTMLElement | null = el.querySelector("sup"); 
         const sub: HTMLElement | null = el.querySelector("sub"); 
+
         return {
             type: "fraction", 
             numerator: sup ? parseElement(sup) : {type: "text", value: ''} as MathNode,
@@ -71,13 +89,26 @@ export function parseElement(el: HTMLElement): MathNode {
         } as MathNode; 
     }
 
-    // Sqrt: <sup> 1- <span>√<span> -15 </span></span> </sup>
+    /**
+     * <span class="frac">
+     *  <sup>-1+
+     *      <span>√
+     *          <span">-11
+     *          </span>
+     *      </span>
+     *      </sup>
+     *      <span>/</span>   
+     *   <sub>2
+     * </sub>
+     * </span>
+     */
+
     if (el.tagName === "SPAN" && el.innerText.trim().startsWith("√")) {     //  
+        el.innerText = el.innerText.substring(1);
         return { 
+            parent: parent,
             type: "sqrt", 
-            value: (el.hasChildNodes()) ? 
-                parseChildren(el) : 
-                {type: "text", value: el.innerText}   // if childnode -> always only 1 since 
+            value: wrapChildren(parseChildren(el), el.tagName) // if childnode -> always only 1 since 
         } as MathNode                                 // this is due to fact GN uses 2 spans for sqrt 
     }                                                 // one for symbol, other for contents
     // Sub, Sup cases
@@ -89,7 +120,7 @@ export function parseElement(el: HTMLElement): MathNode {
         } as MathNode
     }
 
-    if (el.tagName === "SUP") {
+    else if (el.tagName === "SUP") {
         return {
             type: "sup", 
             value: wrapChildren(parseChildren(el), el.tagName)
@@ -111,6 +142,10 @@ export function parseElement(el: HTMLElement): MathNode {
  * @returns 
  */
 export function wrapChildren(nodes: MathNode[], tag: string) : MathNode { 
+    if (nodes[0] === undefined) {
+        console.log(`broke on a: ${tag}`);
+    }
+
     if (nodes.length === 1) return nodes[0]
     return {
         type: "group", 

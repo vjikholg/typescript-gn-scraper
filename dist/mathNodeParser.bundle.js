@@ -21,7 +21,7 @@ var MathNode = (() => {
   // src/types/MathNode.ts
   var MathNode_exports = {};
   __export(MathNode_exports, {
-    ChildHandler: () => ChildHandler,
+    ChildFactory: () => ChildFactory,
     parseChildren: () => parseChildren,
     parseElement: () => parseElement,
     wrapChildren: () => wrapChildren
@@ -32,12 +32,16 @@ var MathNode = (() => {
   var FractionBuilder = (numerator, denom) => {
     return { type: "fraction", numerator, denominator: denom };
   };
-  var ChildHandler = {
-    "SUB": (s) => MathNodeBuilder("sub", s),
-    "\u221A": (s) => MathNodeBuilder("sqrt", s),
-    "SUP": (s) => MathNodeBuilder("sup", s),
-    "TEXT": (s) => MathNodeBuilder("text", s),
-    "FRAC": (s, q) => FractionBuilder(s, q)
+  var GroupBuilder = (tag, children) => {
+    return { type: "group", tag, children };
+  };
+  var ChildFactory = {
+    "sub": (s) => MathNodeBuilder("sub", s),
+    "sqrt": (s) => MathNodeBuilder("sqrt", s),
+    "sup": (s) => MathNodeBuilder("sup", s),
+    "text": (s) => MathNodeBuilder("text", s),
+    "fraction": (n, d) => FractionBuilder(n, d),
+    "group": (t, mn) => GroupBuilder(t, mn)
   };
   function parseChildren(parent) {
     const results = [];
@@ -53,7 +57,7 @@ var MathNode = (() => {
     });
     return results;
   }
-  function parseElement(el) {
+  function parseElement(el, parent) {
     if (el.tagName === "SPAN" && el.classList.contains("frac")) {
       const sup = el.querySelector("sup");
       const sub = el.querySelector("sub");
@@ -64,9 +68,11 @@ var MathNode = (() => {
       };
     }
     if (el.tagName === "SPAN" && el.innerText.trim().startsWith("\u221A")) {
+      el.innerText = el.innerText.substring(1);
       return {
+        parent,
         type: "sqrt",
-        value: el.hasChildNodes() ? parseChildren(el) : { type: "text", value: el.innerText }
+        value: wrapChildren(parseChildren(el), el.tagName)
         // if childnode -> always only 1 since 
       };
     }
@@ -75,8 +81,7 @@ var MathNode = (() => {
         type: "sub",
         value: wrapChildren(parseChildren(el), el.tagName)
       };
-    }
-    if (el.tagName === "SUP") {
+    } else if (el.tagName === "SUP") {
       return {
         type: "sup",
         value: wrapChildren(parseChildren(el), el.tagName)
@@ -89,6 +94,9 @@ var MathNode = (() => {
     };
   }
   function wrapChildren(nodes, tag) {
+    if (nodes[0] === void 0) {
+      console.log(`broke on a: ${tag}`);
+    }
     if (nodes.length === 1) return nodes[0];
     return {
       type: "group",
