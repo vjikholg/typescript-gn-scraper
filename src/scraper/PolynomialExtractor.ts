@@ -12,7 +12,7 @@ export class PolynomialExtractor {
         })
 
         const handle : ElementHandle<Element> | null = await page.$(".galpoly")
-        if (!handle) throw new Error (`No galpoly at this URL: ${page.url}`)
+        if (!handle) throw new Error (`No galpoly at this URL: ${(page.url())}`)
         handle.evaluate((elem) => { 
             console.log(elem.innerHTML);
         })

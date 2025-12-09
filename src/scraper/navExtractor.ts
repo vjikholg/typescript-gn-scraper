@@ -68,6 +68,19 @@ export class NavExtractor {
         return processed;
     }
 
+    static async getLabel(page: Page) {
+        const nav : ElementHandle<HTMLLIElement>[] = (await page.$$("nav ul li"));
+        let selfLabel : string = ""; 
+        
+        for (let i = 0 ; i < nav.length; i++) {
+            if (await nav[i].evaluate((li : HTMLLIElement) => li.innerText.toLowerCase().includes("label"))) { 
+                selfLabel = await nav[i+1].evaluate((li : HTMLLIElement) => { 
+                    return li.innerText
+                })
+                break; 
+            }
+        }
+    }
 }
 
 // async function main() { 

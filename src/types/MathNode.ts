@@ -9,6 +9,8 @@ export interface SqrtNode {type: 'sqrt'; value: MathNode, parent: MathNode};
 export interface SubNode {type: 'sub'; value: MathNode, parent: MathNode}; 
 export interface SupNode {type: 'sup'; value: MathNode, parent: MathNode}; 
 export interface GroupNode {type: 'group'; tag: string, children: MathNode[], parent: MathNode};
+
+// MathNode types
 export type MathNodeTypes = MathNode['type'];
 export type MathNode = 
       TextNode
@@ -19,9 +21,6 @@ export type MathNode =
     | GroupNode // represent a math statement which cannot be simplified to a single value, i.e., 1+√5
 
 export type NodeOf<T extends MathNodeTypes> = Extract<MathNode, {type: T}>; 
-
-
-
 export type HTMLTags = 'SUB' | 'SUP' | '√' | 'TEXT' | 'FRAC'; 
 
 type TagHandler = ((text: string) => MathNode) 
@@ -32,6 +31,7 @@ function MathNodeBuilder(type: string, value: string | MathNode | MathNode[]): M
     return {type: type, value: value} as MathNode; 
 }
 
+// Function Types
 const FractionBuilder : TagHandler = (numerator: MathNode, denom: MathNode) => {
     return {type: "fraction", numerator: numerator, denominator: denom} as MathNode;
 }
@@ -40,6 +40,7 @@ const GroupBuilder : TagHandler = (tag: string, children: MathNode[]) => {
     return {type: 'group', tag: tag, children: children} as MathNode;
 }
 
+// Simple object factory
 export const ChildFactory : {[K in MathNodeTypes]: TagHandler} = {
     'sub': (s: string) => MathNodeBuilder('sub', s),
     'sqrt': (s: string) => MathNodeBuilder('sqrt', s), 

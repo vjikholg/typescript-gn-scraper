@@ -35,7 +35,7 @@ export class MaxSubQuoExtractor {
             })
             if (containsGroup) return p; 
         }
-        throw new Error(`No maximal subgroup at link: ${page.url}`);  
+        throw new Error(`No maximal subgroup at link: ${page.url()}`);  
     }
 
     /**
