@@ -5,7 +5,7 @@ import path from 'path';
 let ScriptInjected : boolean = false;  
 
 export async function launchBrowser() : Promise<Browser> {
-    return await puppeteer.launch({ headless: false });
+    return await puppeteer.launch({ headless: false , browser: "firefox"});
 }
 
 export async function ScriptInjection(page : Page) {

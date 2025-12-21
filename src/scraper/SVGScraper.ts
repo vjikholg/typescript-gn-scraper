@@ -1,5 +1,5 @@
 import { Page, ElementHandle } from 'puppeteer'
-import { Vertex, Edge } from '../types/GraphTheory';
+import { Vertex, Edge, Vertices, Edges} from '../types/GraphTheory';
 
 
 /**
@@ -32,42 +32,67 @@ export class SVGScraper {
         const path : SVGPathElement = await rawpath.evaluate((elem : SVGPathElement) => {
             return elem;
         })
+
+        const testPath : any = await rawpath.evaluate((elem : any) => { // janky af hack but should work in context of ff
+            return elem.getPathData(); 
+        })
+    
         return path;
     } 
 
     static processPathElement(paths: SVGPathElement) { 
         const rawHTML : string = paths.innerHTML; // SVGPathElement.getPathData() isn't working, use regex + innerHTML
-        // kind of impossible without getPathData() :\
-        
-        
+        // kind of impossible without getPathData()
+
+
+    }
+
+    static async internalGrabPathData(page : Page) { 
+        const rawpath : ElementHandle<SVGPathElement> = (await page.$("svg path"))
+        const svgPath : any = page.evaluate(() => {
+            
+        })
+
 
     }
 
     static async vertexGrabber(svd : ElementHandle<Element>) : Promise<Vertex[]> { 
         const vtc : Vertex[] = [];
-        const subgroups : ElementHandle<HTMLElement> = svd.$$('.nSg .cSg')
+        const subgroups : ElementHandle<Element>[] = await svd.$$('.nSg .cSg')
         
         for (const subgroup of subgroups) { 
             // scrapes top to bottom - sub1 -> sub2 -> ... 
             // decide what we want label to be; do we want vertex to hold info?    
-            // const subgroup = subgroups[i]; 
+            // const subgroup = subgroups[i];
 
-            const style : CSSStyleDeclaration = await subgroup.$eval((elem : HTMLElement) => { 
+            const style : CSSStyleDeclaration = await subgroup.evaluate((elem : any) => { 
                 // grab styling 
-                return elem.style as CSSStyleDeclaration;
+                return elem.style as CSSStyleDeclaration; 
             }); 
 
             const left : string = style.left; 
             const top : string = style.top; 
             // assign anchor as label for now
             
-            const label : string = subgroup.$eval('a', (el : HTMLAnchorElement) => { 
+            const label : string = await subgroup.$eval('a', (el : HTMLAnchorElement) => { 
                 return el.innerText.trim();
             })
             // we'll need to get id = sub{i} -> link information from subdesc and proper highlighting within D3-force 
-            vtc.push({label: label, x: left, y: top} as Vertex); 
+            vtc.push({id: label, x: left, y: top} as Vertex); 
         }
         return vtc;
+    }
+
+// assuming we've scraped the vtx/edge data, we'll actually need to plot connections
+// in typescript, objects are "passed by reference" - safe to do inefficient "tree" diagrams
+
+    static ProcessElems(vtc : Vertices) { 
+        // the idea is this: each vertex "touches" one point of the edge 
+        // top, left data from above csss_style decl. 
+        // want to use distnace function to measure. 
+        // we'll use edges in order; 
+
+
     }
 
 
